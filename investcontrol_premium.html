@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>INVESTOR | Wealth Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            bg: '#080C16', // Deep dark blue/black
+                            panel: '#111827', // Slate 900
+                            panelLight: '#1E293B', // Slate 800
+                            accent: '#06b6d4', // Cyan 500
+                            success: '#10b981', // Emerald 500
+                            danger: '#ef4444', // Red 500
+                            gold: '#f59e0b', // Amber 500
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #080C16;
+            color: #e2e8f0;
+            overflow: hidden; /* Prevent body scroll, use inner scroll */
+        }
+        
+        /* Custom Scrollbar for sleek look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #080C16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            border-radius: 0.75rem;
+        }
+
+        .header-bg {
+            background-image: linear-gradient(to right, rgba(8, 12, 22, 1) 0%, rgba(8, 12, 22, 0.4) 100%), url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=2000');
+            background-size: cover;
+            background-position: center 30%;
+        }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: #080C16;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid #06b6d4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="flex h-screen text-sm antialiased selection:bg-brand-accent selection:text-white">
+
+    <!-- Loading State -->
+    <div id="loading-overlay">
+        <div class="spinner mb-4"></div>
+        <div class="text-slate-400 text-lg tracking-widest font-light">INICIANDO <span class="text-white font-semibold">INVESTOR</span></div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="w-64 flex-shrink-0 flex flex-col border-r border-slate-800 bg-brand-bg relative z-20">
+        <!-- Logo -->
+        <div class="h-20 flex items-center px-6 border-b border-slate-800">
+            <i class="fa-solid fa-chart-simple text-brand-gold text-2xl mr-3"></i>
+            <div>
+                <h1 class="text-xl font-bold tracking-wider text-white">INVESTOR</h1>
+                <p class="text-[0.65rem] text-slate-400 uppercase tracking-widest">Patrimônio em Evolução</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <a href="#" class="flex items-center px-3 py-2.5 bg-brand-panelLight rounded-lg text-white group border border-slate-700">
+                <i class="fa-solid fa-house w-6 text-brand-gold"></i>
+                <span class="font-medium">Visão Geral</span>
+            </a>
+            <a href="#" class="flex items-center px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-brand-panel group transition-colors">
+                <i class="fa-solid fa-wallet w-6 group-hover:text-brand-accent transition-colors"></i>
+                <span>Minha Carteira</span>
+            </a>
+            <a href="#" class="flex items-center px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-brand-panel group transition-colors">
+                <i class="fa-solid fa-hand-holding-dollar w-6 group-hover:text-brand-accent transition-colors"></i>
+                <span>Dividendos</span>
+            </a>
+            <a href="#" class="flex items-center px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-brand-panel group transition-colors">
+                <i class="fa-solid fa-chart-pie w-6 group-hover:text-brand-accent transition-colors"></i>
+                <span>Gráficos</span>
+            </a>
+            <a href="#" class="flex items-center px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-brand-panel group transition-colors">
+                <i class="fa-solid fa-bullseye w-6 group-hover:text-brand-accent transition-colors"></i>
+                <span>Metas</span>
+            </a>
+        </nav>
+
+        <!-- Quote -->
+        <div class="p-6 border-t border-slate-800">
+            <p class="text-xs text-slate-400 italic mb-2 leading-relaxed">"O segredo do sucesso do investimento é começar o quanto antes."</p>
+            <p class="text-xs text-brand-accent font-semibold">— Warren Buffett</p>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col relative overflow-hidden">
+        
+        <!-- Header area with Mountain Background -->
+        <header class="h-40 header-bg flex-shrink-0 flex flex-col justify-between p-6 relative z-10">
+            <!-- Top Nav -->
+            <div class="flex justify-between items-center w-full">
+                <!-- Search -->
+                <div class="relative w-96">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="Buscar ativo (ex.: PETR4, ITSA4...)" class="w-full bg-slate-900/60 border border-slate-700/50 rounded-full py-1.5 pl-10 pr-4 text-sm text-white placeholder-slate-400 focus:outline-none focus:border-brand-accent transition-colors backdrop-blur-sm">
+                </div>
+
+                <!-- User Info -->
+                <div class="flex items-center space-x-6 text-sm">
+                    <div class="flex items-center text-slate-300">
+                        <i class="fa-regular fa-calendar mr-2"></i>
+                        <span id="current-date">-- de -- de 202-</span>
+                    </div>
+                    <button class="text-slate-300 hover:text-white relative">
+                        <i class="fa-regular fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 w-2 h-2 bg-brand-gold rounded-full"></span>
+                    </button>
+                    <div class="flex items-center space-x-2 bg-slate-900/60 py-1 pl-1 pr-3 rounded-full border border-slate-700/50 backdrop-blur-sm">
+                        <div class="w-7 h-7 bg-brand-panelLight rounded-full flex items-center justify-center text-white font-bold text-xs border border-slate-600" id="user-initial">
+                            U
+                        </div>
+                        <span class="text-white font-medium">Investidor</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Greeting -->
+            <div class="mt-4 flex justify-between items-end">
+                <div>
+                    <h2 class="text-3xl font-bold text-white mb-1 drop-shadow-lg">Olá, Investidor</h2>
+                    <p class="text-slate-300 text-sm drop-shadow-md">Aqui está o resumo da sua carteira de investimentos.</p>
+                </div>
+                <div class="text-right text-sm text-slate-200 opacity-80 drop-shadow-md hidden md:block">
+                    Disciplina hoje, <br>liberdade amanhã.
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content Scrollable Area -->
+        <div class="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-brand-bg to-[#0b1120] relative z-20 space-y-6 pb-20">
+            
+            <!-- Quick Action Buttons -->
+            <div class="flex justify-end space-x-3 mb-2">
+                <button onclick="openModal('ativoModal')" class="bg-brand-panelLight hover:bg-slate-700 text-white px-4 py-2 rounded-md text-xs font-medium border border-slate-700 transition-colors flex items-center">
+                    <i class="fa-solid fa-plus mr-2 text-brand-success"></i> Novo Ativo
+                </button>
+                <button onclick="openModal('dividendoModal')" class="bg-brand-panelLight hover:bg-slate-700 text-white px-4 py-2 rounded-md text-xs font-medium border border-slate-700 transition-colors flex items-center">
+                    <i class="fa-solid fa-hand-holding-dollar mr-2 text-brand-gold"></i> Novo Dividendo
+                </button>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <!-- Card 1 -->
+                <div class="glass-panel p-5 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-accent/10 rounded-full blur-xl group-hover:bg-brand-accent/20 transition-colors"></div>
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-slate-400 font-medium">Patrimônio Total</h3>
+                        <i class="fa-regular fa-eye text-slate-500 cursor-pointer hover:text-white transition-colors"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-white mb-1" id="kpi-patrimonio">R$ 0,00</div>
+                    <div class="text-xs text-brand-success flex items-center" id="kpi-rentabilidade">
+                        <i class="fa-solid fa-caret-up mr-1"></i> 0,00%
+                        <span class="text-slate-500 ml-2">rentabilidade</span>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="glass-panel p-5 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-success/10 rounded-full blur-xl group-hover:bg-brand-success/20 transition-colors"></div>
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-slate-400 font-medium">Dividendos (Mês)</h3>
+                        <i class="fa-solid fa-coins text-slate-500"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-white mb-1" id="kpi-div-mes">R$ 0,00</div>
+                    <div class="text-xs text-brand-success flex items-center">
+                        <i class="fa-solid fa-caret-up mr-1"></i> histórico
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="glass-panel p-5 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-gold/10 rounded-full blur-xl group-hover:bg-brand-gold/20 transition-colors"></div>
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-slate-400 font-medium">Dividendos (Ano)</h3>
+                        <i class="fa-regular fa-calendar-check text-slate-500"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-white mb-1" id="kpi-div-ano">R$ 0,00</div>
+                    <div class="text-xs text-brand-success flex items-center">
+                        <i class="fa-solid fa-caret-up mr-1"></i> acumulado
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="glass-panel p-5 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-colors"></div>
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-slate-400 font-medium">Total de Ativos</h3>
+                        <i class="fa-solid fa-layer-group text-slate-500"></i>
+                    </div>
+                    <div class="text-2xl font-bold text-white mb-1" id="kpi-ativos">0</div>
+                    <div class="text-xs text-slate-400 flex items-center">
+                        Ações, FIIs, ETFs, etc.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                <!-- Evolution Chart -->
+                <div class="glass-panel p-5 xl:col-span-8 flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-white font-medium">Evolução do Patrimônio</h3>
+                        <div class="flex space-x-2 text-xs">
+                            <button class="px-2 py-1 bg-brand-panelLight text-white rounded hover:bg-slate-700">1A</button>
+                            <button class="px-2 py-1 text-slate-400 hover:text-white">MÁX</button>
+                        </div>
+                    </div>
+                    <div class="flex-1 relative w-full h-[250px]">
+                        <canvas id="evolutionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Composition Chart -->
+                <div class="glass-panel p-5 xl:col-span-4 flex flex-col">
+                    <h3 class="text-white font-medium mb-4">Composição da Carteira</h3>
+                    <div class="flex-1 relative w-full h-[200px] flex justify-center items-center">
+                        <canvas id="compositionChart"></canvas>
+                        <!-- Center text for Doughnut -->
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
+                            <span class="text-[0.65rem] text-slate-400">Total</span>
+                            <span class="text-xs font-bold text-white" id="chart-center-total">R$ 0,00</span>
+                        </div>
+                    </div>
+                    <!-- Custom Legend will go here via JS -->
+                    <div id="composition-legend" class="mt-4 grid grid-cols-2 gap-2 text-xs"></div>
+                </div>
+            </div>
+
+            <!-- Bottom Section Grid -->
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                <!-- Main Portfolio Table -->
+                <div class="glass-panel xl:col-span-8 overflow-hidden flex flex-col">
+                    <div class="p-5 border-b border-slate-700/50 flex justify-between items-center">
+                        <h3 class="text-white font-medium">Minha Carteira</h3>
+                        <button class="text-xs text-brand-accent hover:text-white transition-colors">Ver todos <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="text-[0.65rem] text-slate-400 uppercase bg-slate-800/30">
+                                <tr>
+                                    <th class="px-4 py-3 font-medium">Ativo</th>
+                                    <th class="px-4 py-3 font-medium text-right">Qtd</th>
+                                    <th class="px-4 py-3 font-medium text-right">Preço Médio</th>
+                                    <th class="px-4 py-3 font-medium text-right">Preço Atual</th>
+                                    <th class="px-4 py-3 font-medium text-right">Total Investido</th>
+                                    <th class="px-4 py-3 font-medium text-right">Valor Atual</th>
+                                    <th class="px-4 py-3 font-medium text-right">% Carteira</th>
+                                    <th class="px-4 py-3 font-medium text-right">Resultado</th>
+                                    <th class="px-4 py-3 text-center">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portfolio-table-body" class="divide-y divide-slate-700/50">
+                                <!-- Dynamic rows inserted here -->
+                                <tr><td colspan="9" class="text-center py-6 text-slate-500 italic">Nenhum ativo cadastrado.</td></tr>
+                            </tbody>
+                            <tfoot class="bg-slate-800/50 font-semibold" id="portfolio-table-foot">
+                                <!-- Footer totals -->
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar (Dividends Lists) -->
+                <div class="xl:col-span-4 space-y-6">
+                    
+                    <!-- Dividend Bar Chart -->
+                    <div class="glass-panel p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-white font-medium">Dividendos por Mês</h3>
+                            <span class="text-xs bg-slate-800 px-2 py-1 rounded text-slate-300 border border-slate-700">2026</span>
+                        </div>
+                        <div class="relative w-full h-[150px]">
+                            <canvas id="dividendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Latest Dividends -->
+                    <div class="glass-panel p-5 flex flex-col h-[280px]">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-white font-medium">Últimos Recebimentos</h3>
+                        </div>
+                        <div class="flex-1 overflow-y-auto pr-2" id="recent-dividends-list">
+                            <!-- Dynamic list -->
+                            <div class="text-center py-6 text-slate-500 italic text-xs">Nenhum dividendo registrado.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Tools -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <div class="glass-panel p-4 flex items-center cursor-pointer hover:bg-slate-800 transition-colors">
+                    <i class="fa-solid fa-bullseye text-2xl text-brand-gold mr-4"></i>
+                    <div>
+                        <div class="text-white text-sm font-medium">Metas Financeiras</div>
+                        <div class="text-[0.65rem] text-slate-400">Acompanhe seus objetivos</div>
+                    </div>
+                </div>
+                <div class="glass-panel p-4 flex items-center cursor-pointer hover:bg-slate-800 transition-colors">
+                    <i class="fa-regular fa-file-lines text-2xl text-slate-300 mr-4"></i>
+                    <div>
+                        <div class="text-white text-sm font-medium">Relatórios</div>
+                        <div class="text-[0.65rem] text-slate-400">Baixe extratos detalhados</div>
+                    </div>
+                </div>
+                <div class="glass-panel p-4 flex items-center cursor-pointer hover:bg-slate-800 transition-colors">
+                    <i class="fa-solid fa-book-open-reader text-2xl text-brand-success mr-4"></i>
+                    <div>
+                        <div class="text-white text-sm font-medium">Educação Financeira</div>
+                        <div class="text-[0.65rem] text-slate-400">Construa seu futuro</div>
+                    </div>
+                </div>
+                <div class="glass-panel p-4 flex items-center cursor-pointer hover:bg-slate-800 transition-colors">
+                    <i class="fa-solid fa-cloud-arrow-up text-2xl text-brand-accent mr-4"></i>
+                    <div>
+                        <div class="text-white text-sm font-medium">Cloud Sync Ativo</div>
+                        <div class="text-[0.65rem] text-slate-400">Dados salvos com segurança</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal: Adicionar Ativo -->
+    <div id="ativoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex justify-center items-center opacity-0 transition-opacity duration-300">
+        <div class="bg-brand-panel border border-slate-700 rounded-xl w-full max-w-md p-6 shadow-2xl transform scale-95 transition-transform duration-300" id="ativoModalContent">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-lg font-semibold text-white"><i class="fa-solid fa-plus text-brand-success mr-2"></i> Adicionar Ativo</h3>
+                <button onclick="closeModal('ativoModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form id="form-ativo" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2 sm:col-span-1">
+                        <label class="block text-xs text-slate-400 mb-1">Ticker (ex: PETR4)</label>
+                        <input type="text" id="ativo-ticker" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:border-brand-accent focus:outline-none uppercase" placeholder="TICKER">
+                    </div>
+                    <div class="col-span-2 sm:col-span-1">
+                        <label class="block text-xs text-slate-400 mb-1">Tipo</label>
+                        <select id="ativo-tipo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:border-brand-accent focus:outline-none">
+                            <option value="Ações">Ação</option>
+                            <option value="FIIs">FII</option>
+                            <option value="BDRs">BDR</option>
+                            <option value="ETFs">ETF</option>
+                            <option value="Outros">Outro</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Quantidade</label>
+                        <input type="number" id="ativo-qtd" required min="1" step="any" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:border-brand-accent focus:outline-none" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Preço Médio (R$)</label>
+                        <input type="number" id="ativo-pm" required min="0.01" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:border-brand-accent focus:outline-none" placeholder="0,00">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Preço Atual de Mercado (R$)</label>
+                    <input type="number" id="ativo-atual" required min="0.01" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:border-brand-accent focus:outline-none" placeholder="0,00">
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-3">
+                    <button type="button" onclick="closeModal('ativoModal')" class="px-4 py-2 rounded text-sm text-slate-300 hover:text-white transition-colors">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-success hover:bg-emerald-600 text-white rounded text-sm font-medium transition-colors shadow-lg shadow-emerald-500/20">Salvar Ativo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Adicionar Dividendo -->
+    <div id="dividendoModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex justify-center items-center opacity-0 transition-opacity duration-300">
+        <div class="bg-brand-panel border border-slate-700 rounded-xl w-full max-w-md p-6 shadow-2xl transform scale-95 transition-transform duration-300" id="dividendoModalContent">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-lg font-semibold text-white"><i class="fa-solid fa-hand-holding-dollar text-brand-gold mr-2"></i> Registrar Recebimento</h3>
+                <button onclick="closeModal('dividendoModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form id="form-div" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Ativo (Ticker)</label>
+                    <input type="text" id="div-ticker" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:border-brand-accent focus:outline-none uppercase" placeholder="Ex: ITSA4">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Data do Recebimento</label>
+                        <input type="date" id="div-data" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:border-brand-accent focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Tipo</label>
+                        <select id="div-tipo" required class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:border-brand-accent focus:outline-none">
+                            <option value="Dividendo">Dividendo</option>
+                            <option value="JCP">JCP</option>
+                            <option value="Rendimento">Rendimento (FII)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Valor Total Recebido (R$)</label>
+                    <input type="number" id="div-valor" required min="0.01" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm focus:border-brand-accent focus:outline-none" placeholder="0,00">
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-3">
+                    <button type="button" onclick="closeModal('dividendoModal')" class="px-4 py-2 rounded text-sm text-slate-300 hover:text-white transition-colors">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-gold hover:bg-amber-600 text-white rounded text-sm font-medium transition-colors shadow-lg shadow-amber-500/20">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ==================== LOGIC & FIREBASE ==================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'investor-premium-app';
+        let firebaseConfig = {};
+        
+        try {
+            firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+                // Mock config for local structure if needed, but in real environment it's provided
+                projectId: "mock-project"
+            };
+        } catch (e) {
+            console.warn("Using default firebase config fallback.");
+        }
+
+        let app, db, auth;
+        let userId = null;
+        let ativosData = [];
+        let dividendosData = [];
+
+        // Charts instances
+        let compositionChartInst = null;
+        let dividendChartInst = null;
+        let evolutionChartInst = null;
+
+        // Initialize App
+        async function initApp() {
+            try {
+                if (Object.keys(firebaseConfig).length > 1) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    
+                    // Auth
+                    const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                    if (token) {
+                        await signInWithCustomToken(auth, token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    
+                    userId = auth.currentUser.uid;
+                    setupListeners();
+                } else {
+                    // Fallback to local memory if Firebase config is missing (for preview without backend setup)
+                    console.log("No valid Firebase config, using local memory mode for demo.");
+                    loadDemoData();
+                    updateUI();
+                    hideLoading();
+                }
+            } catch (error) {
+                console.error("Initialization error:", error);
+                loadDemoData(); // Fallback
+                updateUI();
+                hideLoading();
+            }
+
+            // Set Date
+            const dateOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('current-date').textContent = new Date().toLocaleDateString('pt-BR', dateOptions);
+        }
+
+        function setupListeners() {
+            if (!userId || !db) return;
+
+            const ativosRef = collection(db, 'artifacts', appId, 'users', userId, 'ativos');
+            const dividendosRef = collection(db, 'artifacts', appId, 'users', userId, 'dividendos');
+
+            onSnapshot(ativosRef, (snapshot) => {
+                ativosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // Seed some data if completely empty on first load to match the screenshot vibe
+                if (ativosData.length === 0 && dividendosData.length === 0 && !window.demoSeeded) {
+                     seedInitialData();
+                     window.demoSeeded = true;
+                }
+                
+                updateUI();
+                hideLoading();
+            }, (error) => console.error("Error fetching ativos:", error));
+
+            onSnapshot(dividendosRef, (snapshot) => {
+                dividendosData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                updateUI();
+            }, (error) => console.error("Error fetching dividendos:", error));
+        }
+
+        // --- Data Processing & UI Update ---
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+        }
+
+        function formatPercent(value) {
+            const formatted = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(value));
+            return value >= 0 ? `+${formatted}%` : `-${formatted}%`;
+        }
+
+        function updateUI() {
+            let totalInvestido = 0;
+            let totalAtual = 0;
+            let divMesAtual = 0;
+            let divAnoAtual = 0;
+
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+
+            // Calculate Totals for Ativos
+            ativosData.forEach(ativo => {
+                ativo.valorInvestido = ativo.qtd * ativo.pm;
+                ativo.valorAtual = ativo.qtd * ativo.atual;
+                totalInvestido += ativo.valorInvestido;
+                totalAtual += ativo.valorAtual;
+            });
+
+            const rentabilidadeGeral = totalInvestido > 0 ? ((totalAtual / totalInvestido) - 1) * 100 : 0;
+
+            // Calculate Dividendos
+            const monthData = new Array(12).fill(0);
+            
+            dividendosData.forEach(div => {
+                const date = new Date(div.data + 'T12:00:00'); // Prevent timezone shift
+                const month = date.getMonth();
+                const year = date.getFullYear();
+                
+                if (year === currentYear) {
+                    divAnoAtual += Number(div.valor);
+                    monthData[month] += Number(div.valor);
+                    if (month === currentMonth) {
+                        divMesAtual += Number(div.valor);
+                    }
+                }
+            });
+
+            // Update KPI Cards
+            document.getElementById('kpi-patrimonio').textContent = formatCurrency(totalAtual);
+            
+            const rentEl = document.getElementById('kpi-rentabilidade');
+            rentEl.innerHTML = `<i class="fa-solid fa-caret-${rentabilidadeGeral >= 0 ? 'up' : 'down'} mr-1"></i> ${formatPercent(rentabilidadeGeral)} <span class="text-slate-500 ml-2">rentabilidade</span>`;
+            rentEl.className = `text-xs flex items-center ${rentabilidadeGeral >= 0 ? 'text-brand-success' : 'text-brand-danger'}`;
+
+            document.getElementById('kpi-div-mes').textContent = formatCurrency(divMesAtual);
+            document.getElementById('kpi-div-ano').textContent = formatCurrency(divAnoAtual);
+            document.getElementById('kpi-ativos').textContent = ativosData.length;
+
+            // Render Table
+            renderTable(totalAtual, totalInvestido);
+            
+            // Render Recent Dividends
+            renderRecentDividends();
+
+            // Render Charts
+            updateCharts(totalAtual, monthData);
+        }
+
+        function renderTable(globalTotal, globalInvestido) {
+            const tbody = document.getElementById('portfolio-table-body');
+            const tfoot = document.getElementById('portfolio-table-foot');
+            tbody.innerHTML = '';
+            
+            if (ativosData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-slate-500 italic">Nenhum ativo cadastrado.</td></tr>';
+                tfoot.innerHTML = '';
+                return;
+            }
+
+            // Sort by current value
+            const sortedAtivos = [...ativosData].sort((a, b) => b.valorAtual - a.valorAtual);
+
+            sortedAtivos.forEach(ativo => {
+                const percentCarteira = globalTotal > 0 ? (ativo.valorAtual / globalTotal) * 100 : 0;
+                const rentabilidade = ativo.valorInvestido > 0 ? ((ativo.valorAtual / ativo.valorInvestido) - 1) * 100 : 0;
+                
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/30 transition-colors group";
+                
+                // Color mapping for tickers
+                let iconColor = "text-slate-400";
+                if(ativo.tipo === 'Ações') iconColor = "text-blue-400";
+                if(ativo.tipo === 'FIIs') iconColor = "text-brand-success";
+                if(ativo.tipo === 'BDRs') iconColor = "text-brand-gold";
+
+                const rentColor = rentabilidade >= 0 ? 'text-brand-success' : 'text-brand-danger';
+                const rentIcon = rentabilidade >= 0 ? 'fa-caret-up' : 'fa-caret-down';
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 flex items-center">
+                        <div class="w-8 h-8 rounded bg-slate-800 flex justify-center items-center mr-3 border border-slate-700">
+                            <i class="fa-solid fa-building ${iconColor}"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-white">${ativo.ticker}</div>
+                            <div class="text-[0.65rem] text-slate-500">${ativo.tipo}</div>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-right">${ativo.qtd}</td>
+                    <td class="px-4 py-3 text-right">${formatCurrency(ativo.pm)}</td>
+                    <td class="px-4 py-3 text-right font-medium text-white">${formatCurrency(ativo.atual)}</td>
+                    <td class="px-4 py-3 text-right">${formatCurrency(ativo.valorInvestido)}</td>
+                    <td class="px-4 py-3 text-right font-medium text-white">${formatCurrency(ativo.valorAtual)}</td>
+                    <td class="px-4 py-3 text-right">${percentCarteira.toFixed(1)}%</td>
+                    <td class="px-4 py-3 text-right font-medium ${rentColor}"><i class="fa-solid ${rentIcon} mr-1"></i>${formatPercent(rentabilidade)}</td>
+                    <td class="px-4 py-3 text-center">
+                        <button onclick="window.deleteAtivo('${ativo.id}')" class="text-slate-600 hover:text-brand-danger opacity-0 group-hover:opacity-100 transition-all"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const rentabilidadeGeral = globalInvestido > 0 ? ((globalTotal / globalInvestido) - 1) * 100 : 0;
+            const rentGeralColor = rentabilidadeGeral >= 0 ? 'text-brand-success' : 'text-brand-danger';
+
+            tfoot.innerHTML = `
+                <tr>
+                    <td class="px-4 py-4 text-white">Total</td>
+                    <td colspan="3"></td>
+                    <td class="px-4 py-4 text-right text-white">${formatCurrency(globalInvestido)}</td>
+                    <td class="px-4 py-4 text-right text-white font-bold text-sm">${formatCurrency(globalTotal)}</td>
+                    <td class="px-4 py-4 text-right text-white">100%</td>
+                    <td class="px-4 py-4 text-right ${rentGeralColor}"><i class="fa-solid ${rentabilidadeGeral >= 0 ? 'fa-caret-up' : 'fa-caret-down'} mr-1"></i>${formatPercent(rentabilidadeGeral)}</td>
+                    <td></td>
+                </tr>
+            `;
+        }
+
+        function renderRecentDividends() {
+            const list = document.getElementById('recent-dividends-list');
+            list.innerHTML = '';
+
+            if (dividendosData.length === 0) {
+                list.innerHTML = '<div class="text-center py-10 text-slate-500 italic text-xs">Nenhum dividendo registrado.</div>';
+                return;
+            }
+
+            // Sort by date desc
+            const sorted = [...dividendosData].sort((a, b) => new Date(b.data) - new Date(a.data)).slice(0, 10);
+
+            sorted.forEach(div => {
+                const dateObj = new Date(div.data + 'T12:00:00');
+                const formattedDate = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                
+                const el = document.createElement('div');
+                el.className = "flex justify-between items-center py-2.5 border-b border-slate-700/30 last:border-0 group";
+                el.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 rounded-full bg-slate-800 flex justify-center items-center mr-3 text-[0.6rem] font-bold text-white border border-slate-700">
+                            ${div.ticker.substring(0, 4)}
+                        </div>
+                        <div>
+                            <div class="text-xs font-semibold text-white">${div.ticker}</div>
+                            <div class="text-[0.65rem] text-slate-500">${formattedDate} • ${div.tipo}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="text-xs font-bold text-brand-success">${formatCurrency(div.valor)}</div>
+                        <button onclick="window.deleteDividendo('${div.id}')" class="text-slate-600 hover:text-brand-danger opacity-0 group-hover:opacity-100 transition-all text-[10px]"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+                list.appendChild(el);
+            });
+        }
+
+        function updateCharts(globalTotal, monthData) {
+            // Chart.js defaults for dark theme
+            Chart.defaults.color = '#94a3b8';
+            Chart.defaults.font.family = 'Inter';
+
+            // 1. Composition Doughnut Chart
+            const typeSums = {};
+            ativosData.forEach(a => {
+                typeSums[a.tipo] = (typeSums[a.tipo] || 0) + a.valorAtual;
+            });
+            
+            const labels = Object.keys(typeSums);
+            const data = Object.values(typeSums);
+            
+            // Premium Colors for Chart
+            const bgColors = ['#06b6d4', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+
+            document.getElementById('chart-center-total').textContent = formatCurrency(globalTotal);
+
+            if (compositionChartInst) compositionChartInst.destroy();
+            const ctxComp = document.getElementById('compositionChart').getContext('2d');
+            compositionChartInst = new Chart(ctxComp, {
+                type: 'doughnut',
+                data: {
+                    labels: labels.length ? labels : ['Sem dados'],
+                    datasets: [{
+                        data: data.length ? data : [1],
+                        backgroundColor: data.length ? bgColors : ['#1e293b'],
+                        borderWidth: 0,
+                        cutout: '80%',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#cbd5e1',
+                            borderColor: '#334155',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    if(!data.length) return '0,00';
+                                    let val = context.raw;
+                                    let perc = ((val/globalTotal)*100).toFixed(1);
+                                    return ` ${formatCurrency(val)} (${perc}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Build custom legend
+            const legendDiv = document.getElementById('composition-legend');
+            legendDiv.innerHTML = '';
+            if(labels.length) {
+                labels.forEach((label, i) => {
+                    let perc = ((data[i]/globalTotal)*100).toFixed(1);
+                    legendDiv.innerHTML += `
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <span class="w-2 h-2 rounded-full mr-2" style="background-color: ${bgColors[i % bgColors.length]}"></span>
+                                <span class="text-slate-400">${label}</span>
+                            </div>
+                            <span class="text-white font-medium">${perc}%</span>
+                        </div>
+                    `;
+                });
+            }
+
+            // 2. Dividend Bar Chart
+            const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+            if (dividendChartInst) dividendChartInst.destroy();
+            const ctxDiv = document.getElementById('dividendChart').getContext('2d');
+            
+            dividendChartInst = new Chart(ctxDiv, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Dividendos',
+                        data: monthData,
+                        backgroundColor: '#06b6d4',
+                        borderRadius: 4,
+                        barPercentage: 0.6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(51, 65, 85, 0.3)', drawBorder: false },
+                            ticks: {
+                                callback: (val) => 'R$ ' + val,
+                                font: { size: 9 }
+                            }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { font: { size: 9 } }
+                        }
+                    }
+                }
+            });
+
+            // 3. Evolution Line Chart (Simulated for visual flair)
+            // Real apps would track daily snapshots, we simulate a smooth line ending in totalAtual
+            if (evolutionChartInst) evolutionChartInst.destroy();
+            const ctxEvo = document.getElementById('evolutionChart').getContext('2d');
+            
+            // Create Gradient
+            let gradient = ctxEvo.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(6, 182, 212, 0.4)');
+            gradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
+
+            // Fake historical data logic building up to current total
+            const evoData = [];
+            let tempVal = globalTotal * 0.7; // start at 70% of current
+            for(let i=0; i<12; i++) {
+                if(i === 11) evoData.push(globalTotal);
+                else {
+                    tempVal += (globalTotal - tempVal) / (12-i) + (Math.random() * 1000 - 500);
+                    evoData.push(tempVal > 0 ? tempVal : 0);
+                }
+            }
+
+            evolutionChartInst = new Chart(ctxEvo, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Patrimônio',
+                        data: globalTotal === 0 ? new Array(12).fill(0) : evoData,
+                        borderColor: '#06b6d4',
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#080C16',
+                        pointBorderColor: '#06b6d4',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: (ctx) => formatCurrency(ctx.raw)
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: { color: 'rgba(51, 65, 85, 0.3)', drawBorder: false },
+                            ticks: {
+                                callback: (val) => {
+                                    if(val >= 1000) return 'R$ ' + (val/1000).toFixed(0) + 'k';
+                                    return 'R$ ' + val;
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        // --- Modals and Form Handling ---
+
+        window.openModal = function(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(id + 'Content');
+            modal.classList.remove('hidden');
+            // small delay for transition
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        }
+
+        window.closeModal = function(id) {
+            const modal = document.getElementById(id);
+            const content = document.getElementById(id + 'Content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                // clear form
+                if(id === 'ativoModal') document.getElementById('form-ativo').reset();
+                if(id === 'dividendoModal') document.getElementById('form-div').reset();
+            }, 300);
+        }
+
+        // Save Ativo
+        document.getElementById('form-ativo').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const ticker = document.getElementById('ativo-ticker').value.toUpperCase();
+            const tipo = document.getElementById('ativo-tipo').value;
+            const qtd = Number(document.getElementById('ativo-qtd').value);
+            const pm = Number(document.getElementById('ativo-pm').value);
+            const atual = Number(document.getElementById('ativo-atual').value);
+
+            const newAtivo = { ticker, tipo, qtd, pm, atual };
+
+            try {
+                if (db && userId) {
+                    await addDoc(collection(db, 'artifacts', appId, 'users', userId, 'ativos'), newAtivo);
+                } else {
+                    // Local fallback
+                    newAtivo.id = Date.now().toString();
+                    ativosData.push(newAtivo);
+                    updateUI();
+                }
+                closeModal('ativoModal');
+            } catch (error) {
+                console.error("Error saving ativo", error);
+            }
+        });
+
+        // Save Dividendo
+        document.getElementById('form-div').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const ticker = document.getElementById('div-ticker').value.toUpperCase();
+            const data = document.getElementById('div-data').value;
+            const tipo = document.getElementById('div-tipo').value;
+            const valor = Number(document.getElementById('div-valor').value);
+
+            const newDiv = { ticker, data, tipo, valor };
+
+            try {
+                if (db && userId) {
+                    await addDoc(collection(db, 'artifacts', appId, 'users', userId, 'dividendos'), newDiv);
+                } else {
+                    newDiv.id = Date.now().toString();
+                    dividendosData.push(newDiv);
+                    updateUI();
+                }
+                closeModal('dividendoModal');
+            } catch (error) {
+                console.error("Error saving dividendo", error);
+            }
+        });
+
+        // Delete Functions
+        window.deleteAtivo = async function(id) {
+            if(!confirm('Remover este ativo da carteira?')) return;
+            try {
+                if (db && userId) {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'ativos', id));
+                } else {
+                    ativosData = ativosData.filter(a => a.id !== id);
+                    updateUI();
+                }
+            } catch (error) { console.error("Error deleting", error); }
+        }
+
+        window.deleteDividendo = async function(id) {
+            if(!confirm('Remover este registro de dividendo?')) return;
+            try {
+                if (db && userId) {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', userId, 'dividendos', id));
+                } else {
+                    dividendosData = dividendosData.filter(d => d.id !== id);
+                    updateUI();
+                }
+            } catch (error) { console.error("Error deleting", error); }
+        }
+
+        // Demo Data Generation (for empty state wow factor)
+        async function seedInitialData() {
+            if (!db || !userId) return;
+            const demoAtivos = [
+                { ticker: 'PETR4', tipo: 'Ações', qtd: 100, pm: 32.45, atual: 36.72 },
+                { ticker: 'ITSA4', tipo: 'Ações', qtd: 150, pm: 9.87, atual: 11.24 },
+                { ticker: 'BBDC4', tipo: 'Ações', qtd: 80, pm: 15.32, atual: 17.68 },
+                { ticker: 'VISC11', tipo: 'FIIs', qtd: 40, pm: 95.74, atual: 102.31 },
+                { ticker: 'MXRF11', tipo: 'FIIs', qtd: 200, pm: 10.15, atual: 10.45 }
+            ];
+            
+            const baseDate = new Date();
+            const m = baseDate.getMonth() + 1;
+            const y = baseDate.getFullYear();
+            
+            const demoDivs = [
+                { ticker: 'ITSA4', data: `${y}-${m.toString().padStart(2,'0')}-15`, tipo: 'Dividendo', valor: 142.32 },
+                { ticker: 'BBDC4', data: `${y}-${m.toString().padStart(2,'0')}-05`, tipo: 'JCP', valor: 36.72 },
+                { ticker: 'VISC11', data: `${y}-${(m === 1 ? 12 : m-1).toString().padStart(2,'0')}-20`, tipo: 'Rendimento', valor: 42.00 },
+                { ticker: 'PETR4', data: `${y}-${(m === 1 ? 12 : m-1).toString().padStart(2,'0')}-10`, tipo: 'Dividendo', valor: 210.15 }
+            ];
+
+            try {
+                for (let a of demoAtivos) await addDoc(collection(db, 'artifacts', appId, 'users', userId, 'ativos'), a);
+                for (let d of demoDivs) await addDoc(collection(db, 'artifacts', appId, 'users', userId, 'dividendos'), d);
+            } catch(e) {
+                console.error("Error seeding data:", e);
+            }
+        }
+
+        function loadDemoData() {
+            // Local fallback logic already has empty array initialization.
+            // Kept empty to let user add their own in local mode.
+        }
+
+        function hideLoading() {
+            const loader = document.getElementById('loading-overlay');
+            if(loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.remove(), 500);
+            }
+        }
+
+        // Boot
+        window.addEventListener('DOMContentLoaded', initApp);
+
+    </script>
+</body>
+</html>
